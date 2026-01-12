@@ -69,7 +69,7 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
     else
         clip_limit = Inf # No clipping –  effectively standard AHE
     end
-    clip_limit = Int(clip_limit)
+    clip_limit = Int(floor(clip_limit))
     @info "clip_limit: $clip_limit"
 
     # Process each contextual region
