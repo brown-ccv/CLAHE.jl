@@ -37,10 +37,10 @@ GraphicsGems IV, "Contrast Limited Adaptive Histogram Equalization".
     rblocks::Int = 8
     cblocks::Int = 8
     clip::T₃ = 0.1
-
 end
 
 function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::GenericGrayImage)
+    validate_parameters(f)
     out .= img # Placeholder
     return out
 end
