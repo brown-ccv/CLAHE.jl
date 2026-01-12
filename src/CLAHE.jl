@@ -58,6 +58,34 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         out_tmp = copy(img)
     end
 
+    # Size of each contextual region
+    rsize = resized_height / f.rblocks
+    csize = resized_width / f.cblocks
+
+    # Calculate actual clip limit
+    if f.clip > 0
+        clip_limit = f.clip * (rsize * csize) / f.nbins
+        clip_limit < 1 && (clip_limit = 1)
+    else
+        clip_limit = Inf # No clipping –  effectively standard AHE
+    end
+
+    # Process each contextual region
+    histograms = Array{Any}(undef, f.rblocks, f.cblocks)
+    for rblock in 1:f.rblocks
+        for cblock in 1:f.cblocks
+            rstart = Int((rblock - 1) * rsize) + 1
+            rend = Int(rblock * rsize)
+            cstart = Int((cblock - 1) * csize) + 1
+            cend = Int(cblock * csize)
+            @info "Processing block (rblock=$rblock, cblock=$cblock) => rows $rstart:$rend, cols $cstart:$cend"
+            region = view(img_tmp, rstart:rend, cstart:cend)
+            histograms[rblock, cblock] = build_histogram(region, f.nbins, minval=f.minval, maxval=f.maxval)
+            @info "Histogram computed"
+            @info histograms[rblock, cblock][2]
+        end
+    end
+
     out .= must_resize ? imresize(out_tmp, (height, width)) : out_tmp
     return out
 end
