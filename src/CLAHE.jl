@@ -41,7 +41,24 @@ end
 
 function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::GenericGrayImage)
     validate_parameters(f)
-    out .= img # Placeholder
+    height, width = length.(axes(img))
+    @info "height: $height, width: $width"
+
+    # If necessary, resize the image so that the requested number of blocks fit exactly.
+    resized_height = ceil(Int, height / (2 * f.rblocks)) * 2 * f.rblocks
+    resized_width = ceil(Int, width / (2 * f.cblocks)) * 2 * f.cblocks
+    must_resize = (resized_height != height) || (resized_width != width) ? true : false
+    @info "must_resize: $must_resize, resized_height: $resized_height, resized_width: $resized_width"
+    if must_resize
+        @info "resizing"
+        img_tmp = imresize(img, (resized_height, resized_width))
+        out_tmp = copy(img_tmp)
+    else
+        img_tmp = img
+        out_tmp = copy(img)
+    end
+
+    out .= must_resize ? imresize(out_tmp, (height, width)) : out_tmp
     return out
 end
 

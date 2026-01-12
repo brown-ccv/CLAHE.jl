@@ -27,6 +27,10 @@ end
         f = ContrastLimitedAdaptiveEqualization(; clip=1.0)
         out = adjust_histogram(img, f)
         @test size(out) == size(img)
+        @info "Input image:"
+        @info img[1:16]
+        @info "Output image:"
+        @info out[1:16]
         @test all(out .== img)
     end
 end
