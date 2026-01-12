@@ -47,7 +47,7 @@ end
 
 function validate_parameters(f::ContrastLimitedAdaptiveEqualization)
     !(0 <= f.clip <= 1) && throw(ArgumentError("The parameter `clip` must be in the range [0..1]."))
-    !(1 <= f.rblocks && 1 <= f.cblocks) && throw(ArgumentError("The parameters `rblocks` and `cblocks` must be greater than 0."))
+    !(2 <= f.rblocks && 2 <= f.cblocks) && throw(ArgumentError("At least 4 contextual regions required (2x2 or greater)."))
 end
 
 export ContrastLimitedAdaptiveEqualization, adjust_histogram, adjust_histogram!
