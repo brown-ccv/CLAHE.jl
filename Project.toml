@@ -1,0 +1,7 @@
+name = "CLAHE"
+uuid = "6c2d17af-c44a-4bcc-8d98-2becef92ce1b"
+version = "0.1.0"
+authors = ["John Gerrard Holland <john_holland1@brown.edu>"]
+
+[deps]
+ImageContrastAdjustment = "f332f351-ec65-5f6a-b3d1-319c6670881a"
