@@ -20,19 +20,13 @@ end
 
 @testitem "Null operation tests" begin
     using ImageCore: Gray, fill, n0f8
-    img = fill(Gray(n0f8(0.5)), 16, 16)
-    f = ContrastLimitedAdaptiveEqualization(; clip=1.0)
-    out = adjust_histogram(img, f)
-    @test all(out .== img)
-end
-
-
-
-@testitem "Cameraman tests" begin
     using TestImages: testimage
-    img = testimage("cameraman")
-    f = ContrastLimitedAdaptiveEqualization(; clip=1.0)
-    out = adjust_histogram(img, f)
-    @test size(out) == size(img)
-    @test all(out .== img)
+    for img in [fill(Gray(n0f8(0.0)), 16, 16),
+        fill(Gray(n0f8(1.0)), 16, 16),
+        testimage("cameraman")]
+        f = ContrastLimitedAdaptiveEqualization(; clip=1.0)
+        out = adjust_histogram(img, f)
+        @test size(out) == size(img)
+        @test all(out .== img)
+    end
 end
