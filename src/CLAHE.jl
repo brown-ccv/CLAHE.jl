@@ -63,7 +63,7 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
     csize = resized_width / f.cblocks
 
     # Calculate actual clip limit
-    if f.clip > 0
+    if 0 < f.clip
         clip_limit = f.clip * (rsize * csize) / f.nbins
         clip_limit < 1 && (clip_limit = 1)
     else
