@@ -1,4 +1,4 @@
-using Test
+using TestItems
 
 @testitem "Initialization tests" begin
     @test ContrastLimitedAdaptiveEqualization() isa ContrastLimitedAdaptiveEqualization
