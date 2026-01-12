@@ -17,7 +17,6 @@ end
 
 
 @testitem "Null operation tests" begin
-    using CLAHE: ContrastLimitedAdaptiveEqualization, adjust_histogram
     using ImageCore: Gray, fill, n0f8
     img = fill(Gray(n0f8(0.5)), 16, 16)
     f = ContrastLimitedAdaptiveEqualization(; clip=1.0, rblocks=1, cblocks=1)
