@@ -74,20 +74,39 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
 
     # Process each contextual region
     histograms = Array{Any}(undef, f.rblocks, f.cblocks)
-    for rblock in 1:f.rblocks
-        for cblock in 1:f.cblocks
-            rstart = Int((rblock - 1) * rsize) + 1
-            rend = Int(rblock * rsize)
-            cstart = Int((cblock - 1) * csize) + 1
-            cend = Int(cblock * csize)
-            # @info "Processing block (rblock=$rblock, cblock=$cblock) => rows $rstart:$rend, cols $cstart:$cend"
-            region = view(img_tmp, rstart:rend, cstart:cend)
-            edges, raw_counts = build_histogram(region, f.nbins, minval=f.minval, maxval=f.maxval)
-            redistributed_counts = redistribute_histogram(raw_counts, clip_limit)
-            mapped_values = map_histogram(redistributed_counts, f.minval, f.maxval)
-            histograms[rblock, cblock] = (edges, mapped_values)
-            @info "Histogram computed"
-            @info histograms[rblock, cblock][2]
+    for rblock in 1:f.rblocks, cblock in 1:f.cblocks
+        rstart = Int((rblock - 1) * rsize) + 1
+        rend = Int(rblock * rsize)
+        cstart = Int((cblock - 1) * csize) + 1
+        cend = Int(cblock * csize)
+        region = view(img_tmp, rstart:rend, cstart:cend)
+        edges, raw_counts = build_histogram(region, f.nbins, minval=f.minval, maxval=f.maxval)
+        redistributed_counts = redistribute_histogram(raw_counts, clip_limit)
+        mapped_values = map_histogram(redistributed_counts, f.minval, f.maxval)
+        # @info "Lengths: edges=$(length(edges)), raw_counts=$(length(raw_counts)), redistributed_counts=$(length(redistributed_counts)), mapped_values=$(length(mapped_values))"
+        histograms[rblock, cblock] = (edges, mapped_values)
+        # @info "edges: $(Array(edges)), raw_counts: $raw_counts, redistributed_counts: $redistributed_counts, mapped_values: $mapped_values"
+    end
+
+    # Interpolate pixel values
+    for rblock in 1:f.rblocks, cblock in 1:f.cblocks
+        # Naive implementation – no interpolation
+        rstart = Int((rblock - 1) * rsize) + 1
+        rend = Int(rblock * rsize)
+        cstart = Int((cblock - 1) * csize) + 1
+        cend = Int(cblock * csize)
+        region = view(img_tmp, rstart:rend, cstart:cend)
+        out_region = view(out_tmp, rstart:rend, cstart:cend)
+        edges, mapped_values = histograms[rblock, cblock]
+        for i in eachindex(region)
+            index = searchsortedfirst(edges, region[i])
+            # @info edges, region[i], index, mapped_values
+            # @info mapped_values
+            # @show edges
+            # @info typeof(mapped_values)
+            new_value = mapped_values[index-1] # -1 because mapped_values is an OffsetArray
+            # @info "region[i]: $(region[i]), new_value: $new_value"
+            out_region[i] = new_value
         end
     end
 
