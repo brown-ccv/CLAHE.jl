@@ -27,3 +27,14 @@ end
     @info out
     @test all(out .== img)
 end
+
+
+
+@testitem "Cameraman tests" begin
+    using TestImages: testimage
+    img = testimage("cameraman")
+    f = ContrastLimitedAdaptiveEqualization(; clip=0.01, rblocks=8, cblocks=8)
+    out = adjust_histogram(img, f)
+    @test size(out) == size(img)
+    @test all(out .== img)
+end
