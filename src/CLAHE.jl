@@ -69,6 +69,8 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
     else
         clip_limit = Inf # No clipping –  effectively standard AHE
     end
+    clip_limit = Int(clip_limit)
+    @info "clip_limit: $clip_limit"
 
     # Process each contextual region
     histograms = Array{Any}(undef, f.rblocks, f.cblocks)
@@ -78,9 +80,12 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
             rend = Int(rblock * rsize)
             cstart = Int((cblock - 1) * csize) + 1
             cend = Int(cblock * csize)
-            @info "Processing block (rblock=$rblock, cblock=$cblock) => rows $rstart:$rend, cols $cstart:$cend"
+            # @info "Processing block (rblock=$rblock, cblock=$cblock) => rows $rstart:$rend, cols $cstart:$cend"
             region = view(img_tmp, rstart:rend, cstart:cend)
-            histograms[rblock, cblock] = build_histogram(region, f.nbins, minval=f.minval, maxval=f.maxval)
+            edges, raw_counts = build_histogram(region, f.nbins, minval=f.minval, maxval=f.maxval)
+            redistributed_counts = redistribute_histogram(raw_counts, clip_limit)
+            mapped_values = map_histogram(redistributed_counts, f.minval, f.maxval)
+            histograms[rblock, cblock] = (edges, mapped_values)
             @info "Histogram computed"
             @info histograms[rblock, cblock][2]
         end
@@ -93,6 +98,38 @@ end
 function validate_parameters(f::ContrastLimitedAdaptiveEqualization)
     !(0 <= f.clip <= 1) && throw(ArgumentError("The parameter `clip` must be in the range [0..1]."))
     !(2 <= f.rblocks && 2 <= f.cblocks) && throw(ArgumentError("At least 4 contextual regions required (2x2 or greater)."))
+end
+
+function redistribute_histogram(counts::AbstractVector{T}, clip_limit::Int) where T<:Integer
+    n_excess = sum(max(0, count - clip_limit) for count in counts)
+    n_bins = length(counts)
+    if n_excess == 0
+        return counts
+    end
+    increment, remainder = divrem(n_excess, n_bins)
+    new_counts = similar(counts)
+    for i in eachindex(counts)
+        new_counts[i] = min(counts[i], clip_limit) + increment
+    end
+    for i in 1:remainder
+        new_counts[i] += 1
+    end
+    return new_counts
+end
+
+function map_histogram(counts::AbstractVector{T}, minval::Union{Real,AbstractGray}, maxval::Union{Real,AbstractGray}) where T<:Integer
+    n_pixels = sum(counts)
+    scale = (maxval - minval) / n_pixels
+    mapping = similar(counts, Float64) # Can I make this the same type as minval/maxval?
+    cumulative = 0
+    for i in eachindex(counts)
+        cumulative += counts[i]
+        mapping[i] = minval + cumulative * scale
+        if mapping[i] > maxval
+            mapping[i] = maxval
+        end
+    end
+    return mapping
 end
 
 export ContrastLimitedAdaptiveEqualization, adjust_histogram, adjust_histogram!
