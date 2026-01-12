@@ -100,12 +100,7 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         edges, mapped_values = histograms[rblock, cblock]
         for i in eachindex(region)
             index = searchsortedfirst(edges, region[i])
-            # @info edges, region[i], index, mapped_values
-            # @info mapped_values
-            # @show edges
-            # @info typeof(mapped_values)
             new_value = mapped_values[index-1] # -1 because mapped_values is an OffsetArray
-            # @info "region[i]: $(region[i]), new_value: $new_value"
             out_region[i] = new_value
         end
     end
