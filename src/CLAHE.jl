@@ -139,10 +139,7 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         @info "[$idUr, $idLc], [$idUr, $idRc]"
         @info "[$idBr, $idLc], [$idBr, $idRc]"
         @info "$rstart:$rend, $cstart:$cend"
-        @show histUL
-        @show histUR
-        @show histBL
-        @show histBR
+
 
         region = view(img_tmp, rstart:rend, cstart:cend)
         out_region = view(out_tmp, rstart:rend, cstart:cend)
