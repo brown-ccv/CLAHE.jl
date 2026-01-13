@@ -10,8 +10,6 @@ using ImageBase
 using ImageCore.MappedArrays
 using Parameters: @with_kw # Same as Base.@kwdef but works on Julia 1.0
 
-greet() = print("Hello World!")
-
 """
 ```
     ContrastLimitedAdaptiveEqualization <: AbstractHistogramAdjustmentAlgorithm
