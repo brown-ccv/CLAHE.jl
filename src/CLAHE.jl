@@ -138,7 +138,6 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         cstart = Int((cblock - 1) * csize + cblockoffset) + 1
         cend = Int(cstart + cblockpix) - 1
 
-
         @info "r$rblock, c$cblock:"
         @info "[$idUr, $idLc], [$idUr, $idRc]"
         @info "[$idBr, $idLc], [$idBr, $idRc]"
@@ -155,16 +154,13 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         x = Array(range(rstart, rend))
         y = Array(range(cstart, cend))'
 
-        w₁₁ = ((x₂ .- x) .* (y₂ .- y)) / ((x₂ - x₁) * (y₂ - y₁))
-        w₁₂ = ((x₂ .- x) .* (y .- y₁)) / ((x₂ - x₁) * (y₂ - y₁))
-        w₂₁ = ((x .- x₁) .* (y₂ .- y)) / ((x₂ - x₁) * (y₂ - y₁))
-        w₂₂ = ((x .- x₁) .* (y .- y₁)) / ((x₂ - x₁) * (y₂ - y₁))
+        wₙ = ((x₂ - x₁) * (y₂ - y₁))
+        w₁₁ = ((x₂ .- x) .* (y₂ .- y))
+        w₁₂ = ((x₂ .- x) .* (y .- y₁))
+        w₂₁ = ((x .- x₁) .* (y₂ .- y))
+        w₂₂ = ((x .- x₁) .* (y .- y₁))
 
-
-        # @info "size(w₁₁): $(size(w₁₁)), size(resultUL): $(size(resultUL))"
-        # @show w₁₁ .* resultUL + w₁₂ .* resultUR + w₂₁ .* resultBL + w₂₂ .* resultBR
-
-        @. out_region = w₁₁ * resultUL + w₁₂ * resultUR + w₂₁ * resultBL + w₂₂ * resultBR
+        @. out_region = (w₁₁ * resultUL + w₁₂ * resultUR + w₂₁ * resultBL + w₂₂ * resultBR) / wₙ
     end
 
     out .= must_resize ? imresize(out_tmp, (height, width)) : out_tmp
