@@ -154,10 +154,6 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         resultUR = histUR.(region)
         resultBL = histBL.(region)
         resultBR = histBR.(region)
-        @info resultUL[1:10]
-        @info resultUR[1:10]
-        @info resultBL[1:10]
-        @info resultBR[1:10]
 
         x₁, x₂ = rstart, rend
         y₁, y₂ = cstart, cend
