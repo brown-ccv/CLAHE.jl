@@ -135,11 +135,10 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         cstart = Int((cblock - 1) * csize + cblockoffset) + 1
         cend = Int(cstart + cblockpix) - 1
 
-        @info "r$rblock, c$cblock:"
-        @info "[$idUr, $idLc], [$idUr, $idRc]"
-        @info "[$idBr, $idLc], [$idBr, $idRc]"
-        @info "$rstart:$rend, $cstart:$cend"
-
+        # @info "r$rblock, c$cblock:"
+        # @info "[$idUr, $idLc], [$idUr, $idRc]"
+        # @info "[$idBr, $idLc], [$idBr, $idRc]"
+        # @info "$rstart:$rend, $cstart:$cend"
 
         region = view(img_tmp, rstart:rend, cstart:cend)
         out_region = view(out_tmp, rstart:rend, cstart:cend)
@@ -156,8 +155,7 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         y₁, y₂ = cstart, cend
         x = Array(range(rstart, rend))
         y = Array(range(cstart, cend))'
-
-        @show x₁, x₂, x, x₂ .- x, (x₂ - x₁) * (y₂ - y₁)
+        # @show x₁, x₂, x, x₂ .- x, (x₂ - x₁) * (y₂ - y₁)
 
         w₁₁ = ((x₂ .- x) .* (y₂ .- y))
         w₁₂ = ((x₂ .- x) .* (y .- y₁))
@@ -165,11 +163,11 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         w₂₂ = ((x .- x₁) .* (y .- y₁))
         wₙ = ((x₂ - x₁) * (y₂ - y₁))
 
-        @assert all(w₁₁ + w₁₂ + w₂₁ + w₂₂ .== wₙ)
+        # @assert all(w₁₁ + w₁₂ + w₂₁ + w₂₂ .== wₙ)
 
-        @info "($(w₁₁[1]) * $(resultUL[1]) + $(w₁₂[1]) * $(resultUR[1]) + $(w₂₁[1]) * $(resultBL[1]) + $(w₂₂[1]) * $(resultBR[1])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[1])"
-        @info "($(w₁₁[2]) * $(resultUL[2]) + $(w₁₂[2]) * $(resultUR[2]) + $(w₂₁[2]) * $(resultBL[2]) + $(w₂₂[2]) * $(resultBR[2])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[2])"
-        @info "($(w₁₁[end]) * $(resultUL[end]) + $(w₁₂[end]) * $(resultUR[end]) + $(w₂₁[end]) * $(resultBL[end]) + $(w₂₂[end]) * $(resultBR[end])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[end])"
+        # @info "($(w₁₁[1]) * $(resultUL[1]) + $(w₁₂[1]) * $(resultUR[1]) + $(w₂₁[1]) * $(resultBL[1]) + $(w₂₂[1]) * $(resultBR[1])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[1])"
+        # @info "($(w₁₁[2]) * $(resultUL[2]) + $(w₁₂[2]) * $(resultUR[2]) + $(w₂₁[2]) * $(resultBL[2]) + $(w₂₂[2]) * $(resultBR[2])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[2])"
+        # @info "($(w₁₁[end]) * $(resultUL[end]) + $(w₁₂[end]) * $(resultUR[end]) + $(w₂₁[end]) * $(resultBL[end]) + $(w₂₂[end]) * $(resultBR[end])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[end])"
 
         @. out_region = (w₁₁ * resultUL + w₁₂ * resultUR + w₂₁ * resultBL + w₂₂ * resultBR) / wₙ
     end
@@ -179,7 +177,7 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
 end
 
 function validate_parameters(f::ContrastLimitedAdaptiveEqualization)
-    !(0 <= f.clip <= 1) && throw(ArgumentError("The parameter `clip` must be in the range [0..1]."))
+    # !(0 <= f.clip <= 1) && throw(ArgumentError("The parameter `clip` must be in the range [0..1]."))
     !(1 <= f.rblocks && 1 <= f.cblocks) && throw(ArgumentError("At least 1 contextual regions required (1x1 or greater)."))
 end
 
