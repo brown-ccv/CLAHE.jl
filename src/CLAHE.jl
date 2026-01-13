@@ -87,7 +87,9 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
     end
 
     # Interpolate pixel values
-    for rblock in 1:f.rblocks, cblock in 1:f.cblocks
+    for rblock in 1:(f.rblocks), cblock in 1:(f.cblocks)
+        # histLU, histRU, histLB, histRB
+
         # Naive implementation – no interpolation
         rstart = Int((rblock - 1) * rsize) + 1
         rend = Int(rblock * rsize)
@@ -96,11 +98,7 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         region = view(img_tmp, rstart:rend, cstart:cend)
         out_region = view(out_tmp, rstart:rend, cstart:cend)
         edges, mapped_values = histograms[rblock, cblock]
-        for i in eachindex(region)
-            index = searchsortedfirst(edges, region[i])
-            new_value = mapped_values[index-1] # -1 because mapped_values is an OffsetArray
-            out_region[i] = new_value
-        end
+        out_region .= remap_value.(region; edges, mapped_values)
     end
 
     out .= must_resize ? imresize(out_tmp, (height, width)) : out_tmp
@@ -142,6 +140,11 @@ function map_histogram(counts::AbstractVector{T}, minval::Union{Real,AbstractGra
         end
     end
     return mapping
+end
+
+function remap_value(value; edges, mapped_values)
+    index = searchsortedfirst(edges, value)
+    return mapped_values[index-1] # -1 because mapped_values is an OffsetArray
 end
 
 export ContrastLimitedAdaptiveEqualization, adjust_histogram, adjust_histogram!
