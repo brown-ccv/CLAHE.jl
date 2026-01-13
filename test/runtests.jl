@@ -17,7 +17,18 @@ end
 
 @testitem "Zeroes image, clip=1" begin
     using ImageCore: Gray, fill, n0f8
-    img = fill(Gray(n0f8(0.0)), 16, 16)
+    img = fill(Gray(n0f8(0.0)), 32, 32)
+    f = ContrastLimitedAdaptiveEqualization(; clip=1.0, nbins=4)
+    out = adjust_histogram(img, f)
+    @info img
+    @info out
+    @test size(out) == size(img)
+    @test all(out .== img)
+end
+
+@testitem "Grays image, clip=1" begin
+    using ImageCore: Gray, fill, n0f8
+    img = fill(Gray(n0f8(0.5)), 32, 32)
     f = ContrastLimitedAdaptiveEqualization(; clip=1.0, nbins=4)
     out = adjust_histogram(img, f)
     @info img
@@ -28,7 +39,7 @@ end
 
 @testitem "Ones image, clip=1" begin
     using ImageCore: Gray, fill, n0f8
-    img = fill(Gray(n0f8(1.0)), 16, 16)
+    img = fill(Gray(n0f8(1.0)), 32, 32)
     f = ContrastLimitedAdaptiveEqualization(; clip=1.0, nbins=4)
     out = adjust_histogram(img, f)
     @info img
