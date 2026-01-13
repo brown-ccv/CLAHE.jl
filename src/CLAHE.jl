@@ -192,16 +192,9 @@ function redistribute_histogram(counts::AbstractVector{T}, clip_limit::Int) wher
     for i in eachindex(counts)
         new_counts[i] = min(counts[i], clip_limit) + increment
     end
-
-    while remainder > 0
-        i = 0
-        if remainder > 0 && new_counts[i] < clip_limit
-            new_counts[i] += 1
-            remainder -= 1
-        end
-        i += 1
+    for i in 1:remainder
+        new_counts[i] += 1
     end
-
     return new_counts
 end
 
