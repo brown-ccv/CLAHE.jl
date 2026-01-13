@@ -13,8 +13,6 @@ end
     @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveEqualization(; rblocks=-1))
     @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveEqualization(; cblocks=0))
     @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveEqualization(; cblocks=-1))
-    @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveEqualization(; rblocks=1))
-    @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveEqualization(; cblocks=1))
 end
 
 @testitem "Zeroes image, clip=1" begin

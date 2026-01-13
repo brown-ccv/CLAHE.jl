@@ -61,12 +61,9 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
     csize = resized_width / f.cblocks
 
     # Calculate actual clip limit
-    if 0 < f.clip
-        clip_limit = f.clip * (rsize * csize) / f.nbins
-        clip_limit < 1 && (clip_limit = 1)
-    else
-        clip_limit = Inf # No clipping –  effectively standard AHE
-    end
+    clip_limit = f.clip * (rsize * csize) / f.nbins
+    clip_limit < 1 && (clip_limit = 1)
+
     clip_limit = Int(floor(clip_limit))
     @info "clip_limit: $clip_limit"
 
@@ -142,6 +139,10 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         @info "[$idUr, $idLc], [$idUr, $idRc]"
         @info "[$idBr, $idLc], [$idBr, $idRc]"
         @info "$rstart:$rend, $cstart:$cend"
+        @show histUL
+        @show histUR
+        @show histBL
+        @show histBR
 
         region = view(img_tmp, rstart:rend, cstart:cend)
         out_region = view(out_tmp, rstart:rend, cstart:cend)
@@ -149,16 +150,33 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         resultUL, resultUR = histUL.(region), histUR.(region)
         resultBL, resultBR = histBL.(region), histBR.(region)
 
+        resultUL = histUL.(region)
+        resultUR = histUR.(region)
+        resultBL = histBL.(region)
+        resultBR = histBR.(region)
+        @info resultUL[1:10]
+        @info resultUR[1:10]
+        @info resultBL[1:10]
+        @info resultBR[1:10]
+
         x₁, x₂ = rstart, rend
         y₁, y₂ = cstart, cend
         x = Array(range(rstart, rend))
         y = Array(range(cstart, cend))'
 
-        wₙ = ((x₂ - x₁) * (y₂ - y₁))
+        @show x₁, x₂, x, x₂ .- x, (x₂ - x₁) * (y₂ - y₁)
+
         w₁₁ = ((x₂ .- x) .* (y₂ .- y))
         w₁₂ = ((x₂ .- x) .* (y .- y₁))
         w₂₁ = ((x .- x₁) .* (y₂ .- y))
         w₂₂ = ((x .- x₁) .* (y .- y₁))
+        wₙ = ((x₂ - x₁) * (y₂ - y₁))
+
+        @assert all(w₁₁ + w₁₂ + w₂₁ + w₂₂ .== wₙ)
+
+        @info "($(w₁₁[1]) * $(resultUL[1]) + $(w₁₂[1]) * $(resultUR[1]) + $(w₂₁[1]) * $(resultBL[1]) + $(w₂₂[1]) * $(resultBR[1])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[1])"
+        @info "($(w₁₁[2]) * $(resultUL[2]) + $(w₁₂[2]) * $(resultUR[2]) + $(w₂₁[2]) * $(resultBL[2]) + $(w₂₂[2]) * $(resultBR[2])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[2])"
+        @info "($(w₁₁[end]) * $(resultUL[end]) + $(w₁₂[end]) * $(resultUR[end]) + $(w₂₁[end]) * $(resultBL[end]) + $(w₂₂[end]) * $(resultBR[end])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[end])"
 
         @. out_region = (w₁₁ * resultUL + w₁₂ * resultUR + w₂₁ * resultBL + w₂₂ * resultBR) / wₙ
     end
