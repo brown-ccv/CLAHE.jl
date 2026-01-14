@@ -26,9 +26,11 @@ This version is based on the description in:
 GraphicsGems IV, "Contrast Limited Adaptive Histogram Equalization".
 
 """
-@with_kw struct ContrastLimitedAdaptiveHistogramEqualization{T₁<:Union{Real,AbstractGray},
+@with_kw struct ContrastLimitedAdaptiveHistogramEqualization{
+    T₁<:Union{Real,AbstractGray},
     T₂<:Union{Real,AbstractGray},
-    T₃<:Real} <: AbstractHistogramAdjustmentAlgorithm
+    T₃<:Real
+} <: AbstractHistogramAdjustmentAlgorithm
     nbins::Int = 128
     minval::T₁ = 0.0
     maxval::T₂ = 1.0
