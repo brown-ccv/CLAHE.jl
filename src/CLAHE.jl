@@ -22,7 +22,7 @@ using Parameters: @with_kw # Same as Base.@kwdef but works on Julia 1.0
 Performs Contrast Limited Adaptive Histogram Equalisation (CLAHE) on the input
 image. 
 
-This version is based on the description in:
+This version is based on the code in:
 GraphicsGems IV, "Contrast Limited Adaptive Histogram Equalization".
 
 # References
@@ -45,15 +45,12 @@ end
 function (f::ContrastLimitedAdaptiveHistogramEqualization)(out::GenericGrayImage, img::GenericGrayImage)
     validate_parameters(f)
     height, width = length.(axes(img))
-    @info "height: $height, width: $width"
 
     # If necessary, resize the image so that the requested number of blocks fit exactly.
     resized_height = ceil(Int, height / (2 * f.rblocks)) * 2 * f.rblocks
     resized_width = ceil(Int, width / (2 * f.cblocks)) * 2 * f.cblocks
     must_resize = (resized_height != height) || (resized_width != width) ? true : false
-    @info "must_resize: $must_resize, resized_height: $resized_height, resized_width: $resized_width"
     if must_resize
-        @info "resizing"
         img_tmp = imresize(img, (resized_height, resized_width))
         out_tmp = copy(img_tmp)
     else
@@ -68,9 +65,7 @@ function (f::ContrastLimitedAdaptiveHistogramEqualization)(out::GenericGrayImage
     # Calculate actual clip limit
     clip_limit = f.clip * (rsize * csize) / f.nbins
     clip_limit < 1 && (clip_limit = 1)
-
     clip_limit = Int(floor(clip_limit))
-    @info "clip_limit: $clip_limit"
 
     # Process each contextual region
     histograms = Array{Any}(undef, f.rblocks, f.cblocks)
@@ -82,14 +77,9 @@ function (f::ContrastLimitedAdaptiveHistogramEqualization)(out::GenericGrayImage
         region = view(img_tmp, rstart:rend, cstart:cend)
         edges, raw_counts = build_histogram(region, f.nbins, minval=f.minval, maxval=f.maxval)
         redistributed_counts = redistribute_histogram(raw_counts, clip_limit)
-        # @show raw_counts
-        # @show redistributed_counts
         mapping_function = map_histogram(edges::AbstractArray, redistributed_counts, f.minval, f.maxval)
-        # @info "Lengths: edges=$(length(edges)), raw_counts=$(length(raw_counts)), redistributed_counts=$(length(redistributed_counts)), mapped_values=$(length(mapped_values))"
         histograms[rblock, cblock] = mapping_function
-        # @info "edges: $(Array(edges)), raw_counts: $raw_counts, redistributed_counts: $redistributed_counts, mapped_values: $mapped_values"
     end
-    @show clip_limit
 
     # Interpolate pixel values
     for rblock in 1:f.rblocks+1, cblock in 1:f.cblocks+1 # use zero-indexing here because we're not in the original format
@@ -143,11 +133,6 @@ function (f::ContrastLimitedAdaptiveHistogramEqualization)(out::GenericGrayImage
         cstart = Int((cblock - 1) * csize + cblockoffset) + 1
         cend = Int(cstart + cblockpix) - 1
 
-        # @info "r$rblock, c$cblock:"
-        # @info "[$idUr, $idLc], [$idUr, $idRc]"
-        # @info "[$idBr, $idLc], [$idBr, $idRc]"
-        # @info "$rstart:$rend, $cstart:$cend"
-
         region = view(img_tmp, rstart:rend, cstart:cend)
         out_region = view(out_tmp, rstart:rend, cstart:cend)
 
@@ -163,19 +148,12 @@ function (f::ContrastLimitedAdaptiveHistogramEqualization)(out::GenericGrayImage
         y₁, y₂ = cstart, cend
         x = Array(range(rstart, rend))
         y = Array(range(cstart, cend))'
-        # @show x₁, x₂, x, x₂ .- x, (x₂ - x₁) * (y₂ - y₁)
 
         w₁₁ = ((x₂ .- x) .* (y₂ .- y))
         w₁₂ = ((x₂ .- x) .* (y .- y₁))
         w₂₁ = ((x .- x₁) .* (y₂ .- y))
         w₂₂ = ((x .- x₁) .* (y .- y₁))
         wₙ = ((x₂ - x₁) * (y₂ - y₁))
-
-        # @assert all(w₁₁ + w₁₂ + w₂₁ + w₂₂ .== wₙ)
-
-        # @info "($(w₁₁[1]) * $(resultUL[1]) + $(w₁₂[1]) * $(resultUR[1]) + $(w₂₁[1]) * $(resultBL[1]) + $(w₂₂[1]) * $(resultBR[1])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[1])"
-        # @info "($(w₁₁[2]) * $(resultUL[2]) + $(w₁₂[2]) * $(resultUR[2]) + $(w₂₁[2]) * $(resultBL[2]) + $(w₂₂[2]) * $(resultBR[2])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[2])"
-        # @info "($(w₁₁[end]) * $(resultUL[end]) + $(w₁₂[end]) * $(resultUR[end]) + $(w₂₁[end]) * $(resultBL[end]) + $(w₂₂[end]) * $(resultBR[end])) / $(wₙ) => $(((w₁₁ .* resultUL .+ w₁₂ .* resultUR .+ w₂₁ .* resultBL .+ w₂₂ .* resultBR) ./ wₙ)[end])"
 
         @. out_region = (w₁₁ * resultUL + w₁₂ * resultUR + w₂₁ * resultBL + w₂₂ * resultBR) / wₙ
     end
