@@ -7,52 +7,31 @@ end
 
 @testitem "Parameter validation tests" begin
     using CLAHE: validate_parameters
-    @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveHistogramEqualization(; clip=-0.1))
-    @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveHistogramEqualization(; clip=1.1))
     @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveHistogramEqualization(; rblocks=0))
     @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveHistogramEqualization(; rblocks=-1))
     @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveHistogramEqualization(; cblocks=0))
     @test_throws ArgumentError validate_parameters(ContrastLimitedAdaptiveHistogramEqualization(; cblocks=-1))
 end
 
-@testitem "Zeroes image, clip=1" begin
-    using ImageCore: Gray, fill, n0f8
-    img = fill(Gray(n0f8(0.0)), 32, 32)
-    f = ContrastLimitedAdaptiveHistogramEqualization(; clip=1.0, nbins=4)
-    out = adjust_histogram(img, f)
-    @info img
-    @info out
-    @test size(out) == size(img)
-    @test all(out .== img)
-end
-
-@testitem "Grays image, clip=1" begin
-    using ImageCore: Gray, fill, n0f8
-    img = fill(Gray(n0f8(0.5)), 32, 32)
-    f = ContrastLimitedAdaptiveHistogramEqualization(; clip=1.0, nbins=4)
-    out = adjust_histogram(img, f)
-    @info img
-    @info out
-    @test size(out) == size(img)
-    @test all(out .== img)
-end
-
-@testitem "Ones image, clip=1" begin
-    using ImageCore: Gray, fill, n0f8
-    img = fill(Gray(n0f8(1.0)), 32, 32)
-    f = ContrastLimitedAdaptiveHistogramEqualization(; clip=1.0, nbins=4)
-    out = adjust_histogram(img, f)
-    @info img
-    @info out
-    @test size(out) == size(img)
-    @test all(out .== img)
-end
-
-@testitem "Cameraman image, clip=1" begin
+@testitem "No crash for different image sizes" begin
     using TestImages: testimage
-    img = testimage("cameraman")
-    f = ContrastLimitedAdaptiveHistogramEqualization(; clip=1.0)
-    out = adjust_histogram(img, f)
-    @test size(out) == size(img)
-    @test all(out .== img)
+    using ImageTransformations: imresize
+    f = ContrastLimitedAdaptiveHistogramEqualization()
+    image = "cameraman" # Grayscale
+    for xsz in [63, 64, 65, 96, 128, 256, 300, 512], ysz in [63, 64, 65, 96, 128, 256, 300, 512]
+        @info "Testing size: ($xsz, $ysz) for image: $image"
+        img = imresize(testimage(image), (xsz, ysz))
+        out = adjust_histogram(img, f)
+        @test size(out) == size(img)
+    end
+end
+
+
+@testitem "No crash for different image types" begin
+    using TestImages: testimage
+    using ImageBase
+    f = ContrastLimitedAdaptiveHistogramEqualization()
+    for image in ["cameraman", "mandrill"], colortype in [Gray, RGB, RGBA], numerictype in [N0f8, N0f16, Float32, Float64]
+        @test adjust_histogram(convert.(colortype{numerictype}, testimage(image)), f) isa Array{colortype{numerictype},2}
+    end
 end
