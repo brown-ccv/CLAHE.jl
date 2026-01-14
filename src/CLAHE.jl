@@ -25,6 +25,9 @@ image.
 This version is based on the description in:
 GraphicsGems IV, "Contrast Limited Adaptive Histogram Equalization".
 
+# References
+1. P. Heckbert (ed.). *Graphics gems IV*. Cambridge MA, USA: AP Professional, 1994.
+
 """
 @with_kw struct ContrastLimitedAdaptiveHistogramEqualization{
     T₁<:Union{Real,AbstractGray},
