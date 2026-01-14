@@ -12,11 +12,11 @@ using Parameters: @with_kw # Same as Base.@kwdef but works on Julia 1.0
 
 """
 ```
-    ContrastLimitedAdaptiveEqualization <: AbstractHistogramAdjustmentAlgorithm
-    ContrastLimitedAdaptiveEqualization(; nbins = 128, minval = 0, maxval = 1, rblocks = 8, cblocks = 8, clip = 0.1)
+    ContrastLimitedAdaptiveHistogramEqualization <: AbstractHistogramAdjustmentAlgorithm
+    ContrastLimitedAdaptiveHistogramEqualization(; nbins = 128, minval = 0, maxval = 1, rblocks = 8, cblocks = 8, clip = 0.1)
 
-    adjust_histogram([T,] img, f::ContrastLimitedAdaptiveEqualization)
-    adjust_histogram!([out,] img, f::ContrastLimitedAdaptiveEqualization)
+    adjust_histogram([T,] img, f::ContrastLimitedAdaptiveHistogramEqualization)
+    adjust_histogram!([out,] img, f::ContrastLimitedAdaptiveHistogramEqualization)
 ```
 
 Performs Contrast Limited Adaptive Histogram Equalisation (CLAHE) on the input
@@ -26,7 +26,7 @@ This version is based on the description in:
 GraphicsGems IV, "Contrast Limited Adaptive Histogram Equalization".
 
 """
-@with_kw struct ContrastLimitedAdaptiveEqualization{T₁<:Union{Real,AbstractGray},
+@with_kw struct ContrastLimitedAdaptiveHistogramEqualization{T₁<:Union{Real,AbstractGray},
     T₂<:Union{Real,AbstractGray},
     T₃<:Real} <: AbstractHistogramAdjustmentAlgorithm
     nbins::Int = 128
@@ -37,7 +37,7 @@ GraphicsGems IV, "Contrast Limited Adaptive Histogram Equalization".
     clip::T₃ = 0.1
 end
 
-function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::GenericGrayImage)
+function (f::ContrastLimitedAdaptiveHistogramEqualization)(out::GenericGrayImage, img::GenericGrayImage)
     validate_parameters(f)
     height, width = length.(axes(img))
     @info "height: $height, width: $width"
@@ -77,11 +77,14 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
         region = view(img_tmp, rstart:rend, cstart:cend)
         edges, raw_counts = build_histogram(region, f.nbins, minval=f.minval, maxval=f.maxval)
         redistributed_counts = redistribute_histogram(raw_counts, clip_limit)
+        # @show raw_counts
+        # @show redistributed_counts
         mapping_function = map_histogram(edges::AbstractArray, redistributed_counts, f.minval, f.maxval)
         # @info "Lengths: edges=$(length(edges)), raw_counts=$(length(raw_counts)), redistributed_counts=$(length(redistributed_counts)), mapped_values=$(length(mapped_values))"
         histograms[rblock, cblock] = mapping_function
         # @info "edges: $(Array(edges)), raw_counts: $raw_counts, redistributed_counts: $redistributed_counts, mapped_values: $mapped_values"
     end
+    @show clip_limit
 
     # Interpolate pixel values
     for rblock in 1:f.rblocks+1, cblock in 1:f.cblocks+1 # use zero-indexing here because we're not in the original format
@@ -176,7 +179,7 @@ function (f::ContrastLimitedAdaptiveEqualization)(out::GenericGrayImage, img::Ge
     return out
 end
 
-function validate_parameters(f::ContrastLimitedAdaptiveEqualization)
+function validate_parameters(f::ContrastLimitedAdaptiveHistogramEqualization)
     # !(0 <= f.clip <= 1) && throw(ArgumentError("The parameter `clip` must be in the range [0..1]."))
     !(1 <= f.rblocks && 1 <= f.cblocks) && throw(ArgumentError("At least 1 contextual regions required (1x1 or greater)."))
 end
@@ -219,6 +222,6 @@ function map_histogram(edges::AbstractArray, counts::AbstractVector{T}, minval::
 end
 
 
-export ContrastLimitedAdaptiveEqualization, adjust_histogram, adjust_histogram!
+export ContrastLimitedAdaptiveHistogramEqualization, adjust_histogram, adjust_histogram!
 
 end # module CLAHE
